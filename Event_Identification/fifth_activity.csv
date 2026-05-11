@@ -1,0 +1,13 @@
+subsystem,start_time_s,end_time_s,duration_s
+AG10_agv,21.46,950.39,928.93
+XY10_gantry,24.46,90.82,66.36
+UC53_quality,18.46,27.46,9.00
+UC53_quality,87.82,100.48,12.66
+UC53_quality,119.50,122.50,3.00
+UC53_quality,165.31,175.95,10.64
+UC53_quality,191.51,229.89,38.38
+UC53_quality,243.03,320.69,77.66
+UC53_quality,362.27,372.73,10.46
+UC53_quality,470.90,488.92,18.02
+UC53_quality,507.28,510.28,3.00
+UC53_quality,533.00,933.99,400.99

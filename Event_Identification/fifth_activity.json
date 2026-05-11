@@ -1,0 +1,334 @@
+{
+  "file": "fifth",
+  "total_duration_s": 971.9476017466085,
+  "subsystem_intervals": {
+    "MD20_dobot": [],
+    "AG10_agv": [
+      {
+        "start_s": 21.459284690510316,
+        "end_s": 950.3883203893204,
+        "duration_s": 928.92903569881
+      }
+    ],
+    "MI00_conveyor": [],
+    "XY10_gantry": [
+      {
+        "start_s": 24.45918469384354,
+        "end_s": 90.81697276757441,
+        "duration_s": 66.35778807373087
+      }
+    ],
+    "UC53_quality": [
+      {
+        "start_s": 18.459384687177096,
+        "end_s": 27.459084697176763,
+        "duration_s": 8.999700009999668
+      },
+      {
+        "start_s": 87.8170727642412,
+        "end_s": 100.4766507783074,
+        "duration_s": 12.659578014066199
+      },
+      {
+        "start_s": 119.49601679944003,
+        "end_s": 122.49591680277325,
+        "duration_s": 2.9999000033332237
+      },
+      {
+        "start_s": 165.3144895170161,
+        "end_s": 175.95413486217126,
+        "duration_s": 10.639645345155145
+      },
+      {
+        "start_s": 191.51361621279293,
+        "end_s": 229.8923369221026,
+        "duration_s": 38.378720709309675
+      },
+      {
+        "start_s": 243.03189893670213,
+        "end_s": 320.68931035632147,
+        "duration_s": 77.65741141961934
+      },
+      {
+        "start_s": 362.26792440251995,
+        "end_s": 372.7275757474751,
+        "duration_s": 10.459651344955148
+      },
+      {
+        "start_s": 470.9043031898937,
+        "end_s": 488.92370254324857,
+        "duration_s": 18.019399353354856
+      },
+      {
+        "start_s": 507.28309056364793,
+        "end_s": 510.28299056698114,
+        "duration_s": 2.9999000033332095
+      },
+      {
+        "start_s": 533.0022332588914,
+        "end_s": 933.9888670377654,
+        "duration_s": 400.9866337788741
+      }
+    ]
+  },
+  "segments": [
+    {
+      "t_start": 0.0,
+      "t_end": 18.459384687177096,
+      "duration": 18.459384687177096,
+      "active": [],
+      "active_str": "idle"
+    },
+    {
+      "t_start": 18.459384687177096,
+      "t_end": 21.459284690510316,
+      "duration": 2.99990000333322,
+      "active": [
+        "UC53_quality"
+      ],
+      "active_str": "UC53_quality"
+    },
+    {
+      "t_start": 21.459284690510316,
+      "t_end": 24.45918469384354,
+      "duration": 2.9999000033332237,
+      "active": [
+        "AG10_agv",
+        "UC53_quality"
+      ],
+      "active_str": "AG10_agv + UC53_quality"
+    },
+    {
+      "t_start": 24.45918469384354,
+      "t_end": 27.459084697176763,
+      "duration": 2.9999000033332237,
+      "active": [
+        "AG10_agv",
+        "XY10_gantry",
+        "UC53_quality"
+      ],
+      "active_str": "AG10_agv + XY10_gantry + UC53_quality"
+    },
+    {
+      "t_start": 27.459084697176763,
+      "t_end": 87.8170727642412,
+      "duration": 60.35798806706444,
+      "active": [
+        "AG10_agv",
+        "XY10_gantry"
+      ],
+      "active_str": "AG10_agv + XY10_gantry"
+    },
+    {
+      "t_start": 87.8170727642412,
+      "t_end": 90.81697276757441,
+      "duration": 2.9999000033332095,
+      "active": [
+        "AG10_agv",
+        "XY10_gantry",
+        "UC53_quality"
+      ],
+      "active_str": "AG10_agv + XY10_gantry + UC53_quality"
+    },
+    {
+      "t_start": 90.81697276757441,
+      "t_end": 100.4766507783074,
+      "duration": 9.65967801073299,
+      "active": [
+        "AG10_agv",
+        "UC53_quality"
+      ],
+      "active_str": "AG10_agv + UC53_quality"
+    },
+    {
+      "t_start": 100.4766507783074,
+      "t_end": 119.49601679944003,
+      "duration": 19.019366021132626,
+      "active": [
+        "AG10_agv"
+      ],
+      "active_str": "AG10_agv"
+    },
+    {
+      "t_start": 119.49601679944003,
+      "t_end": 122.49591680277325,
+      "duration": 2.9999000033332237,
+      "active": [
+        "AG10_agv",
+        "UC53_quality"
+      ],
+      "active_str": "AG10_agv + UC53_quality"
+    },
+    {
+      "t_start": 122.49591680277325,
+      "t_end": 165.3144895170161,
+      "duration": 42.81857271424286,
+      "active": [
+        "AG10_agv"
+      ],
+      "active_str": "AG10_agv"
+    },
+    {
+      "t_start": 165.3144895170161,
+      "t_end": 175.95413486217126,
+      "duration": 10.639645345155145,
+      "active": [
+        "AG10_agv",
+        "UC53_quality"
+      ],
+      "active_str": "AG10_agv + UC53_quality"
+    },
+    {
+      "t_start": 175.95413486217126,
+      "t_end": 191.51361621279293,
+      "duration": 15.559481350621667,
+      "active": [
+        "AG10_agv"
+      ],
+      "active_str": "AG10_agv"
+    },
+    {
+      "t_start": 191.51361621279293,
+      "t_end": 229.8923369221026,
+      "duration": 38.378720709309675,
+      "active": [
+        "AG10_agv",
+        "UC53_quality"
+      ],
+      "active_str": "AG10_agv + UC53_quality"
+    },
+    {
+      "t_start": 229.8923369221026,
+      "t_end": 243.03189893670213,
+      "duration": 13.139562014599534,
+      "active": [
+        "AG10_agv"
+      ],
+      "active_str": "AG10_agv"
+    },
+    {
+      "t_start": 243.03189893670213,
+      "t_end": 320.68931035632147,
+      "duration": 77.65741141961934,
+      "active": [
+        "AG10_agv",
+        "UC53_quality"
+      ],
+      "active_str": "AG10_agv + UC53_quality"
+    },
+    {
+      "t_start": 320.68931035632147,
+      "t_end": 362.26792440251995,
+      "duration": 41.57861404619848,
+      "active": [
+        "AG10_agv"
+      ],
+      "active_str": "AG10_agv"
+    },
+    {
+      "t_start": 362.26792440251995,
+      "t_end": 372.7275757474751,
+      "duration": 10.459651344955148,
+      "active": [
+        "AG10_agv",
+        "UC53_quality"
+      ],
+      "active_str": "AG10_agv + UC53_quality"
+    },
+    {
+      "t_start": 372.7275757474751,
+      "t_end": 470.9043031898937,
+      "duration": 98.17672744241861,
+      "active": [
+        "AG10_agv"
+      ],
+      "active_str": "AG10_agv"
+    },
+    {
+      "t_start": 470.9043031898937,
+      "t_end": 488.92370254324857,
+      "duration": 18.019399353354856,
+      "active": [
+        "AG10_agv",
+        "UC53_quality"
+      ],
+      "active_str": "AG10_agv + UC53_quality"
+    },
+    {
+      "t_start": 488.92370254324857,
+      "t_end": 507.28309056364793,
+      "duration": 18.359388020399365,
+      "active": [
+        "AG10_agv"
+      ],
+      "active_str": "AG10_agv"
+    },
+    {
+      "t_start": 507.28309056364793,
+      "t_end": 510.28299056698114,
+      "duration": 2.9999000033332095,
+      "active": [
+        "AG10_agv",
+        "UC53_quality"
+      ],
+      "active_str": "AG10_agv + UC53_quality"
+    },
+    {
+      "t_start": 510.28299056698114,
+      "t_end": 533.0022332588914,
+      "duration": 22.71924269191021,
+      "active": [
+        "AG10_agv"
+      ],
+      "active_str": "AG10_agv"
+    },
+    {
+      "t_start": 533.0022332588914,
+      "t_end": 933.9888670377654,
+      "duration": 400.9866337788741,
+      "active": [
+        "AG10_agv",
+        "UC53_quality"
+      ],
+      "active_str": "AG10_agv + UC53_quality"
+    },
+    {
+      "t_start": 933.9888670377654,
+      "t_end": 950.3883203893204,
+      "duration": 16.39945335155494,
+      "active": [
+        "AG10_agv"
+      ],
+      "active_str": "AG10_agv"
+    },
+    {
+      "t_start": 950.3883203893204,
+      "t_end": 971.9476017466085,
+      "duration": 21.559281357288114,
+      "active": [],
+      "active_str": "idle"
+    }
+  ],
+  "summary": {
+    "MD20_dobot": {
+      "total_active_s": 0,
+      "n_activations": 0
+    },
+    "AG10_agv": {
+      "total_active_s": 928.92903569881,
+      "n_activations": 1
+    },
+    "MI00_conveyor": {
+      "total_active_s": 0,
+      "n_activations": 0
+    },
+    "XY10_gantry": {
+      "total_active_s": 66.35778807373087,
+      "n_activations": 1
+    },
+    "UC53_quality": {
+      "total_active_s": 583.8005399820005,
+      "n_activations": 10
+    }
+  }
+}
