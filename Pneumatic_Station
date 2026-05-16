@@ -1,0 +1,162 @@
+model Pneumatic_Station
+
+
+
+  // ============================================================
+  // PARAMETERS
+  // ============================================================
+
+  // ----- Pneumatic supply -----
+  parameter Modelica.Units.SI.Pressure p_supply=400000 
+    "Supply pressure regulated to 4 bar (ERM spec DTXY1000002C: 5 bar network, regulated to 4 bar)";
+  parameter Modelica.Units.SI.Pressure p_atm=101325 "Atmospheric pressure";
+  parameter Real tau_fill(unit="s") = 0.10 
+    "Pressure rise time constant (chamber + supply line)";
+  parameter Real tau_vent(unit="s") = 0.15 
+    "Pressure decay time constant (chamber venting to atmosphere)";
+
+  // ----- Cylinder geometry -----
+  parameter Modelica.Units.SI.Area A_piston=4.91e-4 
+    "Piston area (25 mm diameter cylinder, A = pi*r^2 = pi*0.0125^2)";
+  parameter Modelica.Units.SI.Length stroke_max=0.050 
+    "Maximum stroke length (50 mm)";
+  parameter Modelica.Units.SI.Length stroke_min=0.0 
+    "Minimum stroke (retracted position)";
+
+  // ----- Mechanical -----
+  parameter Modelica.Units.SI.Mass m_piston=0.20 
+    "Moving mass (piston + rod + load attached)";
+  parameter Real b_friction(unit="N.s/m") = 80.0 
+    "Viscous friction (seal drag, dominant in pneumatic cylinders)";
+  parameter Modelica.Units.SI.Force Fc_friction=12.0 
+    "Coulomb friction (static + dynamic, from piston seal)";
+  parameter Modelica.Units.SI.Force F_spring=25.0 
+    "Return spring preload force (single-acting cylinder; set to 0 for double-acting)";
+  parameter Real K_endstop(unit="N/m") = 1.0e6 "End-stop spring stiffness";
+  parameter Real D_endstop(unit="N.s/m") = 500.0 
+    "End-stop damping (energy absorption)";
+  parameter Modelica.Units.SI.Acceleration g=9.81 "Gravity";
+  parameter Boolean vertical=true 
+    "True if cylinder is vertical (gravity acts on piston)";
+
+  // ============================================================
+  // FMU INTERFACE
+  // ============================================================
+
+  Modelica.Blocks.Interfaces.BooleanInput extend_cmd 
+    "True = open valve to supply (extend); False = vent to atmosphere (retract)"
+    annotation (Placement(transformation(extent={{-220,40},{-200,60}})));
+
+  Modelica.Blocks.Interfaces.RealOutput piston_pos(unit="m") 
+    "Piston position (0 = retracted, stroke_max = fully extended)"
+    annotation (Placement(transformation(extent={{200,80},{220,100}})));
+
+  Modelica.Blocks.Interfaces.RealOutput piston_v(unit="m/s") "Piston velocity"
+    annotation (Placement(transformation(extent={{200,40},{220,60}})));
+
+  Modelica.Blocks.Interfaces.RealOutput chamber_p(unit="Pa") 
+    "Pneumatic chamber pressure"
+    annotation (Placement(transformation(extent={{200,0},{220,20}})));
+
+  Modelica.Blocks.Interfaces.RealOutput F_pneumatic(unit="N") 
+    "Net pneumatic force on piston"
+    annotation (Placement(transformation(extent={{200,-40},{220,-20}})));
+
+  Modelica.Blocks.Interfaces.BooleanOutput extended 
+    "True when piston has reached the extended position"
+    annotation (Placement(transformation(extent={{200,-80},{220,-60}})));
+
+  Modelica.Blocks.Interfaces.BooleanOutput retracted 
+    "True when piston has reached the retracted position"
+    annotation (Placement(transformation(extent={{200,-120},{220,-100}})));
+
+  // ============================================================
+  // CONTINUOUS STATES
+  // ============================================================
+
+  Real x_p(
+    unit="m",
+    start=0,
+    fixed=true) "Piston position";
+  Real v_p(
+    unit="m/s",
+    start=0,
+    fixed=true) "Piston velocity";
+  Real p_c(
+    unit="Pa",
+    start=101325,
+    fixed=true) "Chamber pressure";
+
+  Real F_pneu(unit="N") "Pneumatic force";
+  Real F_grav(unit="N") "Gravity force";
+  Real F_endstop_top(unit="N") "End-stop force at extended limit";
+  Real F_endstop_bot(unit="N") "End-stop force at retracted limit";
+  Real F_friction_total(unit="N") 
+    "Total friction (viscous + Coulomb + return spring)";
+  Real F_net(unit="N") "Net force on piston";
+
+equation 
+  // ============================================================
+  // PNEUMATIC SUBSYSTEM (first-order pressure dynamics)
+  // ============================================================
+  if extend_cmd then
+    der(p_c) = (p_supply - p_c)/tau_fill;
+  else
+    der(p_c) = (p_atm - p_c)/tau_vent;
+  end if;
+
+  // ============================================================
+  // FORCES ON PISTON
+  // ============================================================
+  F_pneu = (p_c - p_atm)*A_piston;
+
+  if vertical then
+    F_grav = -m_piston*g;
+  else
+    F_grav = 0;
+  end if;
+
+  // Friction + return spring combined.
+  // Return spring active only when piston is above retracted position.
+  if x_p > stroke_min then
+    F_friction_total = -F_spring - b_friction*v_p - Fc_friction*tanh(v_p*100);
+  else
+    F_friction_total = -b_friction*v_p - Fc_friction*tanh(v_p*100);
+  end if;
+
+  // End-stop forces with damping
+  if x_p >= stroke_max then
+    F_endstop_top = -K_endstop*(x_p - stroke_max) - D_endstop*v_p;
+  else
+    F_endstop_top = 0;
+  end if;
+
+  if x_p <= stroke_min then
+    F_endstop_bot = -K_endstop*(x_p - stroke_min) - D_endstop*v_p;
+  else
+    F_endstop_bot = 0;
+  end if;
+
+  // Newton's second law
+  F_net = F_pneu + F_grav + F_endstop_top + F_endstop_bot + F_friction_total;
+  m_piston*der(v_p) = F_net;
+  der(x_p) = v_p;
+
+  // ============================================================
+  // OUTPUTS
+  // ============================================================
+  piston_pos = x_p;
+  piston_v = v_p;
+  chamber_p = p_c;
+  F_pneumatic = F_pneu;
+  extended = x_p > (stroke_max - 0.002);
+  retracted = x_p < (stroke_min + 0.002);
+
+  annotation (experiment(
+      StopTime=5,
+      Interval=0.001,
+      Tolerance=1e-4), Diagram(coordinateSystem(extent={{-220,-140},{220,120}})));
+
+public 
+  ;
+end Pneumatic_Station;
