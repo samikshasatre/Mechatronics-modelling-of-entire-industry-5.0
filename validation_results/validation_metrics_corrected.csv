@@ -1,0 +1,3 @@
+file,validation_type,mean_rms_current,peak_rms_current,voltage_balance_mean_abs,current_balance_mean_abs,activation_time,deactivation_time
+four.tdms,steady_state,0.05985378212251032,0.06085867935348506,1.0968960959342,0.1059451410358,,
+second.tdms,transient,0.10585614982613457,0.10722264574603138,0.0083866698425,0.3166492481341667,0.4801546625,0.5008208125
