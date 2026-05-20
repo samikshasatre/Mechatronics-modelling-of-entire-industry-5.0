@@ -1,179 +1,158 @@
 """
-sensor_model.py — Logical models of SICK photoelectric sensors used on the ALIX line.
+sensor_model.py — Logical photoelectric sensor models for the ALIX line.
 
-A photoelectric sensor (SICK GTB-6 type) fires when an object (pallet, part) crosses
-its detection beam. We model this purely logically based on the geometric position
-of the moving object on the conveyor:
+Models the SICK GTB-6 family of through-beam/diffuse photoelectric sensors
+used throughout the line. Each sensor has:
+  - A position x (in meters) along the conveyor
+  - A detection range (meters) — pallet must be within this range
+  - A response time (seconds) — minimum dwell time to trigger
+  - Optional miss probability (for noise simulation)
 
-  - The sensor has a fixed position x_sensor along the belt.
-  - The detection beam has a small width (detection_range, ~10 mm).
-  - The sensor is "active" (output=True) when |x_object - x_sensor| < detection_range/2.
-  - A small response delay (~3 ms) is applied to the rising/falling edges to match
-    real photoelectric sensor latency.
-  - Optional miss probability (default 0) can be added to model unreliable detection.
+The SensorArray container holds the 4 standard ALIX line sensors:
+  - S1_input    at x = 100 mm (input)
+  - S2_assembly at x = 650 mm (XY10 pick position)
+  - S3_vision   at x = 1100 mm (vision inspection)
+  - S4_quality  at x = 1650 mm (quality check)
 
-This is a logical/discrete model — no physics inside the sensor itself, only the
-mapping from physical position to Boolean output.
+Sensor states are read by process_state_machine.py to trigger transitions.
 """
 
 import random
+from dataclasses import dataclass, field
 
 
+@dataclass
 class PhotoelectricSensor:
-    """
-    Logical SICK photoelectric sensor.
+    """One photoelectric sensor at a fixed position on the conveyor."""
+    id: str
+    x: float                        # sensor position [m]
+    range_m: float = 0.010          # detection half-width [m] (10 mm)
+    response_time: float = 0.003    # minimum dwell time [s] (3 ms)
+    miss_prob: float = 0.0          # noise: probability of false negative
 
-    Triggers when the object crosses its position within detection_range.
-    Includes response delay and optional miss probability.
-    """
+    # State (internal)
+    _last_state: bool = False
+    _entry_time: float = -1.0       # time the pallet first entered the range
 
-    def __init__(self, sensor_id: str, position_x_m: float,
-                 detection_range_m: float = 0.010,
-                 response_time_s: float = 0.003,
-                 miss_prob: float = 0.0):
+    def update(self, t: float, pallet_x: float) -> bool:
         """
-        Args:
-            sensor_id: human-readable label, e.g. "S1_input"
-            position_x_m: location along the belt, in meters from belt start
-            detection_range_m: beam width (detection zone), in meters
-            response_time_s: rising/falling edge delay, in seconds
-            miss_prob: probability of a missed detection (0.0 = perfect)
+        Update sensor state at time t given pallet position pallet_x (in m).
+        Returns True if sensor is currently activated (pallet in range).
         """
-        self.id = sensor_id
-        self.x = position_x_m
-        self.r = detection_range_m
-        self.tau = response_time_s
-        self.miss_prob = miss_prob
+        in_range = abs(pallet_x - self.x) <= self.range_m
 
-        # Internal state
-        self._raw_state = False     # instantaneous (no delay)
-        self._delayed_state = False # what the PLC sees
-        self._t_last_change = 0.0   # when the raw state last changed
-
-    def update(self, t: float, object_x: float) -> bool:
-        """
-        Update the sensor with the current object position and return its output.
-
-        Args:
-            t: simulation time (s)
-            object_x: position of the object on the belt (m)
-
-        Returns:
-            Boolean output of the sensor (True = object detected)
-        """
-        # Instantaneous detection
-        new_raw = abs(object_x - self.x) < (self.r / 2.0)
-
-        # Edge detection
-        if new_raw != self._raw_state:
-            self._raw_state = new_raw
-            self._t_last_change = t
-
-        # Apply response delay
-        if (t - self._t_last_change) >= self.tau:
-            # Optional miss probability on rising edge
-            if self._raw_state and random.random() < self.miss_prob:
-                self._delayed_state = False  # miss
+        if in_range:
+            if self._entry_time < 0:
+                self._entry_time = t
+            dwell = t - self._entry_time
+            if dwell >= self.response_time:
+                # Apply miss probability for noise simulation
+                if self.miss_prob > 0 and random.random() < self.miss_prob:
+                    self._last_state = False
+                else:
+                    self._last_state = True
             else:
-                self._delayed_state = self._raw_state
+                self._last_state = False
+        else:
+            self._entry_time = -1.0
+            self._last_state = False
 
-        return self._delayed_state
-
-    @property
-    def state(self) -> bool:
-        """Current Boolean output (without re-updating)."""
-        return self._delayed_state
+        return self._last_state
 
     def reset(self):
-        """Reset internal state to no detection."""
-        self._raw_state = False
-        self._delayed_state = False
-        self._t_last_change = 0.0
-
-    def __repr__(self):
-        return (f"PhotoelectricSensor(id='{self.id}', x={self.x*1000:.0f}mm, "
-                f"state={self._delayed_state})")
+        """Reset sensor internal state (between pallet cycles)."""
+        self._last_state = False
+        self._entry_time = -1.0
 
 
 class SensorArray:
-    """
-    Convenience container for multiple sensors along a conveyor.
-    Allows updating all sensors in one call.
-    """
+    """A collection of sensors that can all be updated in one call."""
 
-    def __init__(self, sensors: list = None):
-        self.sensors = sensors or []
-        # Build a lookup by id
-        self._by_id = {s.id: s for s in self.sensors}
-
-    def add(self, sensor: PhotoelectricSensor):
-        """Add a sensor to the array."""
-        self.sensors.append(sensor)
-        self._by_id[sensor.id] = sensor
-
-    def update_all(self, t: float, object_x: float) -> dict:
-        """
-        Update all sensors with the same object position.
-
-        Returns:
-            Dict {sensor_id: bool}
-        """
-        return {s.id: s.update(t, object_x) for s in self.sensors}
+    def __init__(self, sensors: list):
+        self.sensors = sensors
+        self._id_to_sensor = {s.id: s for s in sensors}
 
     def __getitem__(self, sensor_id: str) -> PhotoelectricSensor:
-        return self._by_id[sensor_id]
+        return self._id_to_sensor[sensor_id]
+
+    def update_all(self, t: float, pallet_x: float) -> dict:
+        """
+        Update all sensors at time t with pallet position pallet_x (in m).
+        Returns dict {sensor_id: bool_state}.
+        """
+        return {s.id: s.update(t, pallet_x) for s in self.sensors}
 
     def reset_all(self):
+        """Reset all sensors (call when starting a new pallet cycle)."""
         for s in self.sensors:
             s.reset()
 
 
-# ---------------------------------------------------------------------------
-# Default sensor layout for ALIX line
-# ---------------------------------------------------------------------------
-# These positions are starting estimates. Update with measured values from
-# the lab session (see assumptions.md for details).
-#
-# Layout (from belt start to belt end, x in meters):
-#   S1 at 0.10 m — pallet input detection
-#   S2 at 0.65 m — pallet at assembly station (XY10)
-#   S3 at 1.10 m — pallet at vision station
-#   S4 at 1.65 m — pallet at quality control
-
 def default_alix_sensors() -> SensorArray:
-    """Build the standard ALIX sensor layout."""
-    arr = SensorArray()
-    arr.add(PhotoelectricSensor("S1_input",    position_x_m=0.10))
-    arr.add(PhotoelectricSensor("S2_assembly", position_x_m=0.65))
-    arr.add(PhotoelectricSensor("S3_vision",   position_x_m=1.10))
-    arr.add(PhotoelectricSensor("S4_quality",  position_x_m=1.65))
-    return arr
+    """
+    Build the standard ALIX line sensor configuration.
+    Positions are in METERS (S.I. units, consistent with the rest of the toolchain).
+    """
+    return SensorArray([
+        PhotoelectricSensor(id="S1_input",    x=0.100),  # 100 mm
+        PhotoelectricSensor(id="S2_assembly", x=0.650),  # 650 mm
+        PhotoelectricSensor(id="S3_vision",   x=1.100),  # 1100 mm
+        PhotoelectricSensor(id="S4_quality",  x=1.650),  # 1650 mm
+    ])
 
 
-# ---------------------------------------------------------------------------
-# Self-test
-# ---------------------------------------------------------------------------
-
+# =====================================================================
+# SELF-TEST
+# =====================================================================
 if __name__ == "__main__":
-    # Quick test: simulate a pallet moving from x=0 to x=2.0 at v=0.2 m/s over 10s
     print("Running sensor self-test...")
-    arr = default_alix_sensors()
+    print("(pallet moves from 0 to 2000 mm at 200 mm/s)")
+    print()
+    sensors = default_alix_sensors()
 
-    dt = 0.001
-    v = 0.2
-    print(f"\n{'t (s)':>6} {'x (mm)':>8} {'S1':>4} {'S2':>4} {'S3':>4} {'S4':>4}")
-    for k in range(0, 10001, 500):  # print every 0.5 s
+    # Use a small time step so the sensor's response_time (3 ms) is satisfied
+    # within a few samples. Self-test at 10 ms steps for 10 s = 1000 samples.
+    dt = 0.01            # 10 ms time step
+    t_end = 10.0
+    v = 0.200            # pallet velocity, 200 mm/s
+    n_steps = int(t_end / dt)
+
+    print(f"{'t (s)':>6}  {'x (mm)':>7}  {'S1':>3}  {'S2':>3}  {'S3':>3}  {'S4':>3}")
+    print("-" * 40)
+
+    # Print every 0.25 s for readability
+    print_every = int(0.25 / dt)
+
+    fired = {"S1_input": False, "S2_assembly": False,
+             "S3_vision": False, "S4_quality": False}
+
+    for k in range(n_steps):
         t = k * dt
-        x = v * t
-        states = arr.update_all(t, x)
-        print(f"{t:6.2f} {x*1000:8.0f} "
-              f"{int(states['S1_input']):>4} "
-              f"{int(states['S2_assembly']):>4} "
-              f"{int(states['S3_vision']):>4} "
-              f"{int(states['S4_quality']):>4}")
+        pallet_x = v * t                          # in meters
+        states = sensors.update_all(t, pallet_x)
 
-    print("\nSensor self-test passed if you saw 1's appear at the expected positions:")
-    print("  S1 around t=0.5 s (x=100mm)")
-    print("  S2 around t=3.25 s (x=650mm)")
-    print("  S3 around t=5.5 s (x=1100mm)")
-    print("  S4 around t=8.25 s (x=1650mm)")
+        # Track first firing of each sensor
+        for sid, st in states.items():
+            if st and not fired[sid]:
+                fired[sid] = True
+                print(f"  *** {sid} fired at t = {t:.2f} s, pallet_x = {pallet_x*1000:.0f} mm")
+
+        # Periodic table print
+        if k % print_every == 0:
+            s1 = int(states["S1_input"])
+            s2 = int(states["S2_assembly"])
+            s3 = int(states["S3_vision"])
+            s4 = int(states["S4_quality"])
+            print(f"  {t:5.2f}  {pallet_x*1000:6.0f}    {s1}    {s2}    {s3}    {s4}")
+
+    print()
+    print("Sensor self-test summary:")
+    print(f"  S1_input    fired: {fired['S1_input']}    (expected around t=0.5 s, x=100 mm)")
+    print(f"  S2_assembly fired: {fired['S2_assembly']} (expected around t=3.25 s, x=650 mm)")
+    print(f"  S3_vision   fired: {fired['S3_vision']}   (expected around t=5.5 s, x=1100 mm)")
+    print(f"  S4_quality  fired: {fired['S4_quality']}  (expected around t=8.25 s, x=1650 mm)")
+
+    if all(fired.values()):
+        print("\n  ✅ All 4 sensors fired correctly. Sensor model works.")
+    else:
+        print("\n  ❌ One or more sensors did not fire. Check positions and units.")

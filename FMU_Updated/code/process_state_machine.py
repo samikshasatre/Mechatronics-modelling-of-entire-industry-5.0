@@ -1,227 +1,249 @@
 """
-process_state_machine.py — PLC-emulating finite-state machine for the ALIX line.
+process_state_machine.py — PLC emulator for the ALIX line.
 
-This module implements the same sequencing logic that runs on the real Siemens
-S7-1200 PLC, but in Python so it can drive the digital twin in simulation.
+Emulates the Siemens S7-1200 logic of the XY10 station, with explicit
+modeling of:
+  - Continuously-running conveyor (PLC output Q2.0 Marche_Conv_U2)
+  - Pneumatic indexer cylinders that physically stop containers on the
+    moving belt (YV4 Indexeur, YV3 Séparateur, YV2 Bloqueur magasin)
 
-The state machine is event-driven:
-  - Sensor events (rising edges) trigger transitions
-  - Timers handle waits between sub-states
-  - Output commands tell the FMUs and physics models what to do
-
-States (simplified single-pallet cycle):
-    IDLE                  -> wait for work order
-    CONVEYOR_START        -> turn motor on, wait for pallet at S1
-    PALLET_TRANSPORT      -> conveyor running, pallet moving toward XY10
-    PALLET_AT_XY10        -> pallet at S2, stop conveyor
-    XY10_PICK             -> command XY10 to pick (Z down, vacuum on, Z up)
-    XY10_PLACE            -> command XY10 to place at destination
-    CONVEYOR_RESTART      -> resume conveyor, pallet moves to vision
-    PALLET_AT_VISION      -> pallet at S3
-    INSPECTION            -> simulate inspection delay
-    PALLET_AT_QUALITY     -> pallet at S4
-    COMPLETE              -> log cycle, return to IDLE
-    FAULT                 -> any subsystem error
+This matches the real ALIX architecture documented in the ERM dossier
+(DTXY1000003D, DTXY1000010C). The belt motor runs continuously throughout
+production; containers/pallets are stopped at workstations by retractable
+pneumatic cylinders, not by stopping the belt.
 """
 
-from enum import Enum, auto
+from enum import IntEnum
 from dataclasses import dataclass, field
 
 
-class State(Enum):
-    IDLE = auto()
-    CONVEYOR_START = auto()
-    PALLET_TRANSPORT = auto()
-    PALLET_AT_XY10 = auto()
-    XY10_PICK = auto()
-    XY10_PLACE = auto()
-    CONVEYOR_RESTART = auto()
-    PALLET_AT_VISION = auto()
-    INSPECTION = auto()
-    PALLET_AT_QUALITY = auto()
-    COMPLETE = auto()
-    FAULT = auto()
+class State(IntEnum):
+    IDLE = 0
+    CONVEYOR_START = 1
+    PALLET_TRANSPORT = 2
+    PALLET_AT_XY10 = 3
+    XY10_PICK = 4
+    XY10_PLACE = 5
+    CONVEYOR_RESTART = 6   # kept for backward compat with state names, but no conveyor toggle now
+    PALLET_AT_VISION = 7
+    INSPECTION = 8
+    PALLET_AT_QUALITY = 9
+    COMPLETE = 10
+    FAULT = 11
 
 
 @dataclass
-class IO:
-    """All sensor inputs and actuator outputs of the line."""
-    # Sensor inputs (Boolean) — set by sensor_model
+class ALIXIO:
+    """All signals exchanged between PLC, sensors, and actuators."""
+    # ---- Sensor inputs (from sensor_model.py) ----
     s1_input: bool = False
     s2_assembly: bool = False
     s3_vision: bool = False
     s4_quality: bool = False
 
-    # Actuator outputs (commands to FMUs / physics)
+    # ---- Conveyor (continuous in real line) ----
     conveyor_run: bool = False
+    conveyor_speed_setpoint: float = 0.196  # m/s (matches model steady-state)
+
+    # ---- Pneumatic indexer cylinders (NEW) ----
+    # These physically stop containers on the moving belt
+    indexer_pickup_extended: bool = False   # YV4 — holds container at XY10 pickup
+    separator_extended: bool = False        # YV3 — holds product at separator
+    magazine_blocker_extended: bool = True  # YV2 — default extended (holds magazine)
+
+    # ---- XY10 robot commands ----
     xy10_x_target: float = 0.0
     xy10_z_target: float = 0.0
     xy10_vacuum_cmd: bool = False
     xy10_pick_active: bool = False
     xy10_place_active: bool = False
 
-    # Status flags from XY10 model
+    # ---- XY10 status feedback ----
     gripper_attached: bool = False
-    xy10_at_pick_pos: bool = False
-    xy10_at_place_pos: bool = False
-    xy10_at_home: bool = True
 
-    # Logical events
-    inspection_done: bool = False
-    quality_pass: bool = True
-
-    # Cycle counter
+    # ---- Cycle tracking ----
     cycle_count: int = 0
 
 
 class ALIXStateMachine:
-    """
-    Single-pallet, single-cycle state machine for the ALIX line.
-    """
+    """The PLC state machine. Drives all command signals based on sensor inputs."""
+
+    # Time durations for each state (seconds)
+    PICK_DURATION = 1.5
+    PLACE_DURATION = 2.0
+    INSPECTION_DURATION = 0.5
+    RELEASE_DURATION = 0.05   # brief magazine release pulse
 
     def __init__(self):
+        self.io = ALIXIO()
         self.state = State.IDLE
-        self.io = IO()
-        self.t = 0.0
-        self._t_state_entered = 0.0
-        self._state_log = []
+        self.state_entry_time = 0.0
+        self._counted_this_cycle = False
         self._event_log = []
-        self._counted_this_cycle = False  # cycle-count guard
 
-    def _enter(self, new_state: State):
-        """Transition to a new state and log it."""
-        if new_state != self.state:
-            self._event_log.append((self.t, f"{self.state.name} -> {new_state.name}"))
-            self.state = new_state
-            self._t_state_entered = self.t
-            # Clear the cycle-counted flag whenever we enter a new state.
-            # When COMPLETE is entered, the counter increments once and the
-            # flag is set; on transition out of COMPLETE (to IDLE) it is
-            # cleared, ready for the next cycle.
-            self._counted_this_cycle = False
-        self._state_log.append((self.t, self.state.name))
+    def get_event_log(self):
+        return list(self._event_log)
 
-    def time_in_state(self) -> float:
-        """Time elapsed since entering the current state."""
-        return self.t - self._t_state_entered
+    def time_in_state(self):
+        return self._now - self.state_entry_time
 
-    def step(self, t: float, dt: float):
-        """Advance the state machine by dt seconds."""
-        self.t = t
-        s = self.state
+    def _enter(self, new_state, t):
+        """Record state transition."""
+        old = self.state.name
+        new = new_state.name
+        self._event_log.append((t, f"{old} -> {new}"))
+        self.state = new_state
+        self.state_entry_time = t
+        self._counted_this_cycle = False
 
-        # ---- IDLE ----
-        if s == State.IDLE:
+    def step(self, t, dt):
+        """Advance the state machine one tick."""
+        self._now = t
+        time_in = self.time_in_state()
+
+        # ===============================================================
+        # CONVEYOR CONTROL — continuous during production (per ERM dossier)
+        # The conveyor is ON for all states except IDLE-before-first-cycle
+        # and FAULT. It does NOT toggle on/off within a cycle.
+        # ===============================================================
+        if self.state == State.IDLE and self.io.cycle_count == 0:
             self.io.conveyor_run = False
+        elif self.state == State.FAULT:
+            self.io.conveyor_run = False
+        else:
+            self.io.conveyor_run = True
+
+        # ===============================================================
+        # PNEUMATIC INDEXER CONTROL — these stop containers on moving belt
+        # ===============================================================
+
+        # Magazine blocker: extended by default, briefly retracted to release
+        # a container during PALLET_TRANSPORT (a brief pulse at state entry)
+        if self.state == State.PALLET_TRANSPORT and time_in < self.RELEASE_DURATION:
+            self.io.magazine_blocker_extended = False  # releasing
+        else:
+            self.io.magazine_blocker_extended = True
+
+        # Indexer pickup (YV4): holds container at XY10 pickup position
+        # Extended during PALLET_AT_XY10 + XY10_PICK + XY10_PLACE
+        # Retracted (container released) when pick-place complete
+        self.io.indexer_pickup_extended = (
+            self.state in (State.PALLET_AT_XY10,
+                           State.XY10_PICK,
+                           State.XY10_PLACE)
+        )
+
+        # Separator (YV3): briefly extended during pick to separate product
+        self.io.separator_extended = (self.state == State.XY10_PICK)
+
+        # ===============================================================
+        # XY10 ROBOT CONTROL
+        # ===============================================================
+
+        # Reset XY10 commands by default
+        if self.state in (State.IDLE, State.CONVEYOR_START,
+                          State.PALLET_TRANSPORT, State.PALLET_AT_XY10,
+                          State.CONVEYOR_RESTART, State.PALLET_AT_VISION,
+                          State.INSPECTION, State.PALLET_AT_QUALITY,
+                          State.COMPLETE, State.FAULT):
             self.io.xy10_pick_active = False
             self.io.xy10_place_active = False
-            self.io.xy10_vacuum_cmd = False
-            if self.time_in_state() > 0.5:
-                self._enter(State.CONVEYOR_START)
 
-        # ---- CONVEYOR_START ----
-        elif s == State.CONVEYOR_START:
-            self.io.conveyor_run = True
-            if self.io.s1_input:
-                self._enter(State.PALLET_TRANSPORT)
-
-        # ---- PALLET_TRANSPORT ----
-        elif s == State.PALLET_TRANSPORT:
-            self.io.conveyor_run = True
-            if self.io.s2_assembly:
-                self._enter(State.PALLET_AT_XY10)
-
-        # ---- PALLET_AT_XY10 ----
-        elif s == State.PALLET_AT_XY10:
-            self.io.conveyor_run = False
-            if self.time_in_state() > 0.3:
-                self._enter(State.XY10_PICK)
-
-        # ---- XY10_PICK ----
-        elif s == State.XY10_PICK:
+        # XY10_PICK: move to pickup, go down, attach
+        if self.state == State.XY10_PICK:
             self.io.xy10_pick_active = True
-            self.io.xy10_x_target = 0.10
-            self.io.xy10_z_target = 0.05
-            self.io.xy10_vacuum_cmd = True
-            if self.io.gripper_attached and self.time_in_state() > 1.5:
-                self._enter(State.XY10_PLACE)
+            self.io.xy10_x_target = 0.10   # to pickup column
+            self.io.xy10_z_target = 0.05   # down to pickup
+            self.io.xy10_vacuum_cmd = True  # vacuum ON
 
-        # ---- XY10_PLACE ----
-        elif s == State.XY10_PLACE:
-            self.io.xy10_pick_active = False
+        # XY10_PLACE: move to place column, drop part, go up
+        elif self.state == State.XY10_PLACE:
             self.io.xy10_place_active = True
-            self.io.xy10_x_target = 0.20
+            self.io.xy10_x_target = 0.20   # to placement column
+            self.io.xy10_z_target = 0.0    # up
+            if time_in > 1.0:
+                self.io.xy10_vacuum_cmd = False  # release at end
+
+        else:
+            # All other states: XY10 returns to home, vacuum off
+            self.io.xy10_x_target = 0.0
             self.io.xy10_z_target = 0.0
-            if self.time_in_state() > 1.5:
-                self.io.xy10_vacuum_cmd = False
-                if self.time_in_state() > 2.0:
-                    self._enter(State.CONVEYOR_RESTART)
+            self.io.xy10_vacuum_cmd = False
 
-        # ---- CONVEYOR_RESTART ----
-        elif s == State.CONVEYOR_RESTART:
-            self.io.xy10_place_active = False
-            self.io.conveyor_run = True
+        # ===============================================================
+        # STATE TRANSITIONS
+        # ===============================================================
+        if self.state == State.IDLE:
+            if time_in >= 0.5:
+                self._enter(State.CONVEYOR_START, t)
+
+        elif self.state == State.CONVEYOR_START:
+            if time_in >= 0.5:
+                self._enter(State.PALLET_TRANSPORT, t)
+
+        elif self.state == State.PALLET_TRANSPORT:
+            if self.io.s2_assembly:
+                self._enter(State.PALLET_AT_XY10, t)
+
+        elif self.state == State.PALLET_AT_XY10:
+            if time_in >= 0.3:
+                self._enter(State.XY10_PICK, t)
+
+        elif self.state == State.XY10_PICK:
+            if self.io.gripper_attached and time_in >= self.PICK_DURATION:
+                self._enter(State.XY10_PLACE, t)
+
+        elif self.state == State.XY10_PLACE:
+            if time_in >= self.PLACE_DURATION:
+                self._enter(State.CONVEYOR_RESTART, t)
+
+        elif self.state == State.CONVEYOR_RESTART:
+            # Conveyor is already running; this state just releases the
+            # indexer and waits for the pallet to reach the next sensor.
+            # (Name kept for backward compatibility with logs.)
             if self.io.s3_vision:
-                self._enter(State.PALLET_AT_VISION)
+                self._enter(State.PALLET_AT_VISION, t)
 
-        # ---- PALLET_AT_VISION ----
-        elif s == State.PALLET_AT_VISION:
-            self.io.conveyor_run = False
-            if self.time_in_state() > 0.3:
-                self._enter(State.INSPECTION)
+        elif self.state == State.PALLET_AT_VISION:
+            if time_in >= 0.3:
+                self._enter(State.INSPECTION, t)
 
-        # ---- INSPECTION ----
-        elif s == State.INSPECTION:
-            if self.time_in_state() > 0.5:
-                self.io.inspection_done = True
-                self._enter(State.PALLET_AT_QUALITY)
+        elif self.state == State.INSPECTION:
+            if time_in >= self.INSPECTION_DURATION:
+                self._enter(State.PALLET_AT_QUALITY, t)
 
-        # ---- PALLET_AT_QUALITY ----
-        elif s == State.PALLET_AT_QUALITY:
-            self.io.conveyor_run = True
+        elif self.state == State.PALLET_AT_QUALITY:
             if self.io.s4_quality:
-                self._enter(State.COMPLETE)
+                self._enter(State.COMPLETE, t)
 
-        # ---- COMPLETE ----
-        elif s == State.COMPLETE:
-            self.io.conveyor_run = False
-            # Increment cycle count exactly once on entry to this state.
-            # The flag is cleared by _enter() when we leave COMPLETE,
-            # so the next time we reach COMPLETE we count again.
+        elif self.state == State.COMPLETE:
             if not self._counted_this_cycle:
                 self.io.cycle_count += 1
                 self._counted_this_cycle = True
-            if self.time_in_state() > 0.5:
-                self._enter(State.IDLE)
-
-        # ---- FAULT ----
-        elif s == State.FAULT:
-            self.io.conveyor_run = False
-            self.io.xy10_vacuum_cmd = False
-
-    def get_state_log(self) -> list:
-        return self._state_log
-
-    def get_event_log(self) -> list:
-        return self._event_log
+            if time_in >= 0.5:
+                self._enter(State.IDLE, t)
 
 
+# =====================================================================
+# Self-test
+# =====================================================================
 if __name__ == "__main__":
-    print("Running state machine self-test (target = 2 cycles)...")
     sm = ALIXStateMachine()
+    print(f"Initial state: {sm.state.name}")
+    print(f"Initial conveyor_run: {sm.io.conveyor_run}")
+    print(f"Initial indexer_pickup_extended: {sm.io.indexer_pickup_extended}")
+    # Simulate forward
     dt = 0.005
-    t = 0.0
-    while sm.io.cycle_count < 2 and t < 60:
-        cycle_t = t % 15.0
-        sm.io.s1_input    = (1.0  <= cycle_t < 1.05)
-        sm.io.s2_assembly = (5.0  <= cycle_t < 5.05)
-        sm.io.s3_vision   = (12.0 <= cycle_t < 12.05)
-        sm.io.s4_quality  = (14.95 <= cycle_t < 15.0) or (0.0 <= cycle_t < 0.05)
-        sm.io.gripper_attached = (sm.state == State.XY10_PICK
-                                   and sm.time_in_state() > 0.5)
+    for k in range(int(30 / dt)):
+        t = k * dt
+        # Fake sensor inputs to drive transitions
+        if 0.5 < t < 1.0: sm.io.s1_input = True
+        if 3.8 < t < 4.0: sm.io.s2_assembly = True
+        if 5.0 < t < 6.0: sm.io.gripper_attached = True
+        if 9.8 < t < 10.0: sm.io.s3_vision = True
+        if 13.4 < t < 13.6: sm.io.s4_quality = True
         sm.step(t, dt)
-        t += dt
-    print(f"\nReached cycle_count = {sm.io.cycle_count} at t = {t:.2f} s\n")
-    print("State transitions:")
-    for et, ev in sm.get_event_log():
-        print(f"  t={et:6.2f}s : {ev}")
+    print(f"\nAfter 30 s simulation:")
+    print(f"  Final state: {sm.state.name}")
+    print(f"  Cycles completed: {sm.io.cycle_count}")
+    print(f"  Event log: {len(sm.get_event_log())} transitions")
