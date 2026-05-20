@@ -19,3 +19,6 @@ results/
 # OS files
 Thumbs.db
 .DS_Store
+
+# Archives
+*.zip
