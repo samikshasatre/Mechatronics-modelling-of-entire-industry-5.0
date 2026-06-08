@@ -36,7 +36,7 @@ for c in [os.path.join(HERE, "..", "tdms"),
 GAIN_U = 200.0
 GAIN_I = 10.0
 FS = 6000.2
-CONVEYOR_FMU = find_fmu("Conveyor_updated_v2.fmu")
+CONVEYOR_FMU = find_fmu("Conveyor_updated_v3.fmu")
 XY10_FMU = find_fmu("XY10Station_v2.fmu")
 if not os.path.exists(XY10_FMU):
     XY10_FMU = find_fmu("XY10Station.fmu")
@@ -227,6 +227,75 @@ def main():
     print(f"Panel 2: FMU i_phase_inst peak       = {np.max(np.abs(i_fmu_aligned)):.2f} A")
     print(f"Panel 2: Phase alignment shift       = {shift/FS*1000:.2f} ms")
 
+    # ===============================================================
+    # PERFORMANCE METRICS (Romain's request) — reuses v7 processed signals
+    # ===============================================================
+    def _rmse(yt, yp):
+        return float(np.sqrt(np.mean((yt - yp) ** 2)))
+
+    def _nrmse(yt, yp):
+        rng = float(np.max(yt) - np.min(yt))
+        return _rmse(yt, yp) / rng if rng > 0 else float('nan')
+
+    def _mae(yt, yp):
+        return float(np.mean(np.abs(yt - yp)))
+
+    def _r2(yt, yp):
+        ss_res = float(np.sum((yt - yp) ** 2))
+        ss_tot = float(np.sum((yt - np.mean(yt)) ** 2))
+        return 1.0 - ss_res / ss_tot if ss_tot > 0 else float('nan')
+
+    def _fit(yt, yp):
+        en = float(np.linalg.norm(yt - yp))
+        vn = float(np.linalg.norm(yt - np.mean(yt)))
+        return 100.0 * (1.0 - en / vn) if vn > 0 else float('nan')
+
+    def _report(yt, yp, label):
+        n = min(len(yt), len(yp))
+        yt, yp = np.asarray(yt[:n], float), np.asarray(yp[:n], float)
+        m = {'RMSE': _rmse(yt, yp), 'NRMSE': _nrmse(yt, yp), 'MAE': _mae(yt, yp),
+             'R2': _r2(yt, yp), 'FIT_pct': _fit(yt, yp)}
+        print(f"\n  --- Performance metrics: {label} ---")
+        for k, v in m.items():
+            print(f"    {k:9s} = {v:.4f}")
+        return m
+
+    def _sine_fit(t, y, f=50.0):
+        w = 2 * np.pi * f
+        M = np.column_stack([np.sin(w * t), np.cos(w * t), np.ones_like(t)])
+        c, *_ = np.linalg.lstsq(M, y, rcond=None)
+        return float(np.hypot(c[0], c[1])), float(np.arctan2(c[1], c[0]))
+
+    print("\n" + "=" * 60)
+    print("QUANTITATIVE PERFORMANCE METRICS")
+    print("=" * 60)
+    A_meas_i, ph_meas_i = _sine_fit(t_crop / 1000.0, I0_fund_crop)  # t_crop is in ms
+    A_fmu_i, ph_fmu_i = _sine_fit(t_crop / 1000.0, i_fmu_aligned)
+    w = 2 * np.pi * 50
+    i_fmu_phasealigned = A_fmu_i * np.sin(w * (t_crop / 1000.0) + ph_meas_i)
+    m_curr_aligned = _report(I0_fund_crop, i_fmu_phasealigned,
+                             "Conveyor current 50 Hz (phase-aligned)")
+    t_v_seg = rec_four['t'][:n_win]
+    A_meas_v, ph_meas_v = _sine_fit(t_v_seg, U0_meas)
+    U0_sim_aligned = (244 * np.sqrt(2)) * np.sin(2 * np.pi * 50 * t_v_seg + ph_meas_v)
+    m_volt = _report(U0_meas, U0_sim_aligned, "Supply voltage U0 (V)")
+    print(f"    Meas peak  = {A_meas_v:.2f} V   Model peak = {244 * np.sqrt(2):.2f} V")
+
+    m_curr = _report(I0_fund_crop, i_fmu_aligned, "Conveyor current 50 Hz fundamental (A)")
+    pk_meas = float(np.max(np.abs(I0_fund_crop)))
+    pk_fmu = float(np.max(np.abs(i_fmu_aligned)))
+    print(f"    Meas peak  = {pk_meas:.3f} A   FMU peak  = {pk_fmu:.3f} A   "
+          f"ratio = {100 * min(pk_meas, pk_fmu) / max(pk_meas, pk_fmu):.1f} %")
+
+    import csv as _csv
+    _csv_path = os.path.join(HERE, "results", "validation_metrics.csv")
+    with open(_csv_path, "w", newline="") as _f:
+        _w = _csv.writer(_f)
+        _w.writerow(["Signal", "Metric", "Value"])
+        for k, v in m_volt.items(): _w.writerow(["Voltage_U0", k, f"{v:.6f}"])
+        for k, v in m_curr.items(): _w.writerow(["Current_fundamental", k, f"{v:.6f}"])
+    print(f"\n  Metrics CSV saved: {_csv_path}")
+    print("=" * 60)
     # Panel 2a: Raw TDMS (now showing 140 ms cropped window)
     ax2a = fig.add_subplot(gs[1])
     ax2a.plot(t_crop, I0_raw_crop, 'b-', lw=0.7, alpha=0.7,

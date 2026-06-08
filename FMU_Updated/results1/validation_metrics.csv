@@ -1,0 +1,11 @@
+Signal,Metric,Value
+Voltage_U0,RMSE,8.962036
+Voltage_U0,NRMSE,0.013166
+Voltage_U0,MAE,7.255662
+Voltage_U0,R2,0.998657
+Voltage_U0,FIT_pct,96.335405
+Current_fundamental,RMSE,0.797874
+Current_fundamental,NRMSE,0.211585
+Current_fundamental,MAE,0.677003
+Current_fundamental,R2,0.532663
+Current_fundamental,FIT_pct,31.637977

@@ -1,0 +1,156 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 755" font-family="Georgia, serif" font-size="11">
+
+<defs>
+  <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+    <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#e8e4d8" stroke-width="0.6"/>
+  </pattern>
+  <pattern id="grid-major" width="200" height="200" patternUnits="userSpaceOnUse">
+    <path d="M 200 0 L 0 0 0 200" fill="none" stroke="#d8d0c0" stroke-width="1"/>
+  </pattern>
+  <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6"
+          orient="auto-start-reverse">
+    <path d="M 0 0 L 10 5 L 0 10 z" fill="#444"/>
+  </marker>
+  <marker id="arrow-flow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7"
+          orient="auto-start-reverse">
+    <path d="M 0 0 L 10 5 L 0 10 z" fill="#2d7a3f"/>
+  </marker>
+  <marker id="arrow-vib" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6"
+          orient="auto-start-reverse">
+    <path d="M 0 0 L 10 5 L 0 10 z" fill="#2a5fb8"/>
+  </marker>
+  <marker id="arrow-emi" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6"
+          orient="auto-start-reverse">
+    <path d="M 0 0 L 10 5 L 0 10 z" fill="#c79100"/>
+  </marker>
+  <radialGradient id="thermal" cx="50%" cy="50%">
+    <stop offset="0%"  stop-color="#d94a4a" stop-opacity="0.35"/>
+    <stop offset="60%" stop-color="#d94a4a" stop-opacity="0.10"/>
+    <stop offset="100%" stop-color="#d94a4a" stop-opacity="0"/>
+  </radialGradient>
+  <radialGradient id="thermal-cab" cx="50%" cy="50%">
+    <stop offset="0%"  stop-color="#d94a4a" stop-opacity="0.22"/>
+    <stop offset="100%" stop-color="#d94a4a" stop-opacity="0"/>
+  </radialGradient>
+</defs>
+<style>
+  .label      { fill:#1a1a1a; font-size:11px; }
+  .label-bold { fill:#1a1a1a; font-size:12px; font-weight:bold; }
+  .label-sml  { fill:#444; font-size:9.5px; }
+  .dim        { fill:#666; font-size:9px; font-style:italic; }
+  .axis-lbl   { fill:#222; font-size:13px; font-weight:bold; font-family:'Courier New', monospace; }
+  .tbc        { fill:#a0521d; font-size:9px; font-style:italic; }
+  .title      { fill:#1a1a1a; font-size:18px; font-weight:bold; }
+  .subtitle   { fill:#444; font-size:11px; font-style:italic; }
+</style>
+
+<rect width="1200" height="755" fill="#fdfcf7"/>
+<rect width="1200" height="755" fill="url(#grid)"/>
+<rect width="1200" height="755" fill="url(#grid-major)"/>
+<circle cx="200.0" cy="511.1111111111111" r="124.44444444444444" fill="url(#thermal)"/>
+<circle cx="533.3333333333333" cy="666.6666666666666" r="111.1111111111111" fill="url(#thermal-cab)"/>
+<circle cx="577.7777777777777" cy="133.33333333333331" r="487.1111111111111" fill="#f0d8c0" fill-opacity="0.18" stroke="#a66828" stroke-width="0.8" stroke-dasharray="3,4"/>
+<text x="894.4" y="-183.28888888888892" class="label-sml" fill="#a66828" font-style="italic">CR5 reach r=1096</text>
+<rect x="200.0" y="373.3333333333333" width="533.3333333333333" height="53.33333333333333" fill="#3a3a3a" stroke="#1a1a1a" stroke-width="1.2"/>
+<path d="M 244.44444444444443 377.77777777777777 L 257.77777777777777 400.0 L 244.44444444444443 422.2222222222222" fill="none" stroke="#888" stroke-width="1.2" stroke-linecap="round"/>
+<path d="M 333.3333333333333 377.77777777777777 L 346.66666666666663 400.0 L 333.3333333333333 422.2222222222222" fill="none" stroke="#888" stroke-width="1.2" stroke-linecap="round"/>
+<path d="M 422.2222222222222 377.77777777777777 L 435.55555555555554 400.0 L 422.2222222222222 422.2222222222222" fill="none" stroke="#888" stroke-width="1.2" stroke-linecap="round"/>
+<path d="M 511.1111111111111 377.77777777777777 L 524.4444444444445 400.0 L 511.1111111111111 422.2222222222222" fill="none" stroke="#888" stroke-width="1.2" stroke-linecap="round"/>
+<path d="M 600.0 377.77777777777777 L 613.3333333333333 400.0 L 600.0 422.2222222222222" fill="none" stroke="#888" stroke-width="1.2" stroke-linecap="round"/>
+<path d="M 688.8888888888888 377.77777777777777 L 702.2222222222222 400.0 L 688.8888888888888 422.2222222222222" fill="none" stroke="#888" stroke-width="1.2" stroke-linecap="round"/>
+<circle cx="200.0" cy="400.0" r="20.0" fill="#5a4a3a" stroke="#1a1a1a" stroke-width="1.2"/>
+<circle cx="733.3333333333333" cy="400.0" r="20.0" fill="#5a4a3a" stroke="#1a1a1a" stroke-width="1.2"/>
+<text x="200.0" y="453.3333333333333" class="label-sml" text-anchor="middle">drive drum</text>
+<text x="733.3333333333333" y="453.3333333333333" class="label-sml" text-anchor="middle">tail drum (TBC)</text>
+<rect x="166.66666666666666" y="488.88888888888886" width="66.66666666666666" height="44.44444444444444" fill="#8a7050" stroke="#3a2a1a" stroke-width="1.5" rx="3"/>
+<text x="200.0" y="508.88888888888886" class="label-bold" text-anchor="middle">MOTOR</text>
+<text x="200.0" y="517.7777777777777" class="label-sml" text-anchor="middle">TIA56-2 + NMRV30</text>
+<text x="200.0" y="524.4444444444445" class="label-sml" text-anchor="middle" fill="#a83232">T=305K (Δ12K)</text>
+<line x1="355.55555555555554" y1="444.4444444444444" x2="355.55555555555554" y2="355.55555555555554" stroke="#c00" stroke-width="1.0" stroke-dasharray="2,3" opacity="0.7"/>
+<rect x="349.55555555555554" y="440.4444444444444" width="12" height="8" fill="#d44" stroke="#600" stroke-width="0.8"/>
+<rect x="349.55555555555554" y="351.55555555555554" width="12" height="8" fill="#444" stroke="#000" stroke-width="0.8"/>
+<text x="355.55555555555554" y="462.4444444444444" class="label-bold" text-anchor="middle" fill="#c00">S1</text>
+<line x1="466.66666666666663" y1="444.4444444444444" x2="466.66666666666663" y2="355.55555555555554" stroke="#c00" stroke-width="1.0" stroke-dasharray="2,3" opacity="0.7"/>
+<rect x="460.66666666666663" y="440.4444444444444" width="12" height="8" fill="#d44" stroke="#600" stroke-width="0.8"/>
+<rect x="460.66666666666663" y="351.55555555555554" width="12" height="8" fill="#444" stroke="#000" stroke-width="0.8"/>
+<text x="466.66666666666663" y="462.4444444444444" class="label-bold" text-anchor="middle" fill="#1a1a1a">S2</text>
+<line x1="577.7777777777777" y1="444.4444444444444" x2="577.7777777777777" y2="355.55555555555554" stroke="#c00" stroke-width="1.0" stroke-dasharray="2,3" opacity="0.7"/>
+<rect x="571.7777777777777" y="440.4444444444444" width="12" height="8" fill="#d44" stroke="#600" stroke-width="0.8"/>
+<rect x="571.7777777777777" y="351.55555555555554" width="12" height="8" fill="#444" stroke="#000" stroke-width="0.8"/>
+<text x="577.7777777777777" y="462.4444444444444" class="label-bold" text-anchor="middle" fill="#1a1a1a">S3</text>
+<circle cx="355.55555555555554" cy="400.0" r="5" fill="none" stroke="#c00" stroke-width="1.6"/>
+<circle cx="355.55555555555554" cy="400.0" r="2" fill="#c00"/>
+<rect x="511.1111111111111" y="200.0" width="133.33333333333331" height="88.88888888888889" fill="#e8e4d0" stroke="#5a4a30" stroke-width="1.6" stroke-dasharray="6,3" rx="2"/>
+<text x="577.7777777777777" y="186.66666666666666" class="label-bold" text-anchor="middle">XY10</text>
+<text x="577.7777777777777" y="177.77777777777777" class="label-sml" text-anchor="middle">3-axis pick &amp; place</text>
+<line x1="466.66666666666663" y1="288.88888888888886" x2="555.5555555555555" y2="288.88888888888886" stroke="#5a4a30" stroke-width="1.6" marker-end="url(#arrow)" marker-start="url(#arrow)"/>
+<text x="511.1111111111111" y="277.77777777777777" class="dim" text-anchor="middle">X stroke 200</text>
+<line x1="511.1111111111111" y1="333.3333333333333" x2="511.1111111111111" y2="244.44444444444443" stroke="#5a4a30" stroke-width="1.6" marker-end="url(#arrow)" marker-start="url(#arrow)"/>
+<text x="522.2222222222222" y="288.88888888888886" class="dim">Y stroke 200</text>
+<g transform="translate(577.7777777777777,244.44444444444443)"><rect x="-12" y="-8" width="24" height="16" fill="#444" stroke="#000" rx="2"/><circle cx="0" cy="0" r="5" fill="#aaa" stroke="#000"/><circle cx="0" cy="0" r="2" fill="#222"/></g>
+<text x="577.7777777777777" y="222.44444444444443" class="label-sml" text-anchor="middle">SensoPart vision</text>
+<rect x="666.6666666666666" y="244.44444444444443" width="66.66666666666666" height="44.44444444444444" fill="#d8dce8" stroke="#3a4868" stroke-width="1.6" stroke-dasharray="6,3" rx="2"/>
+<text x="700.0" y="264.44444444444446" class="label-bold" text-anchor="middle">Pneumatic</text>
+<text x="700.0" y="270.22222222222223" class="label-sml" text-anchor="middle">AG10 (4 bar)</text>
+<circle cx="577.7777777777777" cy="133.33333333333331" r="66.66666666666666" fill="#3a4a5c" stroke="#1a2a3c" stroke-width="1.8"/>
+<circle cx="577.7777777777777" cy="133.33333333333331" r="55.55555555555555" fill="none" stroke="#7a8a9c" stroke-width="1"/>
+<text x="577.7777777777777" y="136.33333333333331" class="label-bold" text-anchor="middle" fill="#fff">CR5</text>
+<text x="577.7777777777777" y="121.33333333333331" class="label-sml" text-anchor="middle" fill="#dde">6-DOF cobot</text>
+<rect x="444.4444444444444" y="533.3333333333333" width="177.77777777777777" height="88.88888888888889" fill="#bdb29a" stroke="#3a2a1a" stroke-width="1.6" stroke-dasharray="6,3" rx="2"/>
+<text x="533.3333333333333" y="572.4444444444445" class="label-bold" text-anchor="middle">Control cabinet</text>
+<text x="533.3333333333333" y="580.0" class="label-sml" text-anchor="middle">UC50 / UC53 — S7-1200 PLC</text>
+<text x="533.3333333333333" y="587.5555555555555" class="label-sml" text-anchor="middle">VFD + stepper drivers</text>
+<path d="M 355.6 400.0 L 466.7 400.0 L 577.8 400.0 L 577.8 311.1 L 577.8 244.4 L 700.0 266.7 L 497.8 168.9" fill="none" stroke="#2d7a3f" stroke-width="2.2" stroke-linecap="round" marker-end="url(#arrow-flow)" opacity="0.85"/>
+<path d="M 200.0 533.3 Q 444.4 422.2, 533.3 266.7" fill="none" stroke="#2a5fb8" stroke-width="1.6" stroke-dasharray="5,3" marker-end="url(#arrow-vib)" opacity="0.8"/>
+<path d="M 591.1 202.2 L 591.1 235.6" fill="none" stroke="#2a5fb8" stroke-width="1.6" stroke-dasharray="5,3" marker-end="url(#arrow-vib)" opacity="0.8"/>
+<path d="M 622.2 577.8 Q 355.6 488.9, 355.6 413.3" fill="none" stroke="#c79100" stroke-width="1.2" stroke-dasharray="2,3" marker-end="url(#arrow-emi)" opacity="0.75"/>
+<path d="M 622.2 577.8 Q 466.7 488.9, 466.7 413.3" fill="none" stroke="#c79100" stroke-width="1.2" stroke-dasharray="2,3" marker-end="url(#arrow-emi)" opacity="0.75"/>
+<path d="M 622.2 577.8 Q 577.8 488.9, 577.8 413.3" fill="none" stroke="#c79100" stroke-width="1.2" stroke-dasharray="2,3" marker-end="url(#arrow-emi)" opacity="0.75"/>
+<path d="M 622.2 533.3 Q 666.7 466.7, 577.8 288.9" fill="none" stroke="#c79100" stroke-width="1.2" stroke-dasharray="2,3" marker-end="url(#arrow-emi)" opacity="0.75"/>
+<line x1="355.55555555555554" y1="448.88888888888886" x2="466.66666666666663" y2="448.88888888888886" stroke="#888" stroke-width="0.8" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
+<line x1="355.55555555555554" y1="442.88888888888886" x2="355.55555555555554" y2="454.88888888888886" stroke="#888" stroke-width="0.8"/>
+<line x1="466.66666666666663" y1="442.88888888888886" x2="466.66666666666663" y2="454.88888888888886" stroke="#888" stroke-width="0.8"/>
+<text x="411.1111111111111" y="444.88888888888886" text-anchor="middle" class="tbc">S1→S2: 250 (TBC)</text>
+<line x1="466.66666666666663" y1="448.88888888888886" x2="577.7777777777777" y2="448.88888888888886" stroke="#888" stroke-width="0.8" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
+<line x1="466.66666666666663" y1="442.88888888888886" x2="466.66666666666663" y2="454.88888888888886" stroke="#888" stroke-width="0.8"/>
+<line x1="577.7777777777777" y1="442.88888888888886" x2="577.7777777777777" y2="454.88888888888886" stroke="#888" stroke-width="0.8"/>
+<text x="522.2222222222222" y="444.88888888888886" text-anchor="middle" class="tbc">S2→S3: 250 (TBC)</text>
+<line x1="200.0" y1="466.66666666666663" x2="733.3333333333333" y2="466.66666666666663" stroke="#888" stroke-width="0.8" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
+<line x1="200.0" y1="460.66666666666663" x2="200.0" y2="472.66666666666663" stroke="#888" stroke-width="0.8"/>
+<line x1="733.3333333333333" y1="460.66666666666663" x2="733.3333333333333" y2="472.66666666666663" stroke="#888" stroke-width="0.8"/>
+<text x="466.66666666666663" y="462.66666666666663" text-anchor="middle" class="tbc">Conveyor 1200 (TBC)</text>
+<line x1="742.2222222222222" y1="400.0" x2="742.2222222222222" y2="244.44444444444443" stroke="#888" stroke-width="0.8" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
+<line x1="736.2222222222222" y1="400.0" x2="748.2222222222222" y2="400.0" stroke="#888" stroke-width="0.8"/>
+<line x1="736.2222222222222" y1="244.44444444444443" x2="748.2222222222222" y2="244.44444444444443" stroke="#888" stroke-width="0.8"/>
+<text x="748.2222222222222" y="325.22222222222223" class="tbc">250 (TBC)</text>
+<line x1="355.55555555555554" y1="400.0" x2="577.7777777777777" y2="133.33333333333331" stroke="#a66828" stroke-width="0.6" stroke-dasharray="2,2" opacity="0.5"/>
+<text x="408.88888888888886" y="200.0" class="tbc">CR5 base at (500, 600) — TBC</text>
+<line x1="355.55555555555554" y1="466.66666666666663" x2="422.2222222222222" y2="466.66666666666663" stroke="#c00" stroke-width="2.0" marker-end="url(#arrow)"/>
+<text x="426.66666666666663" y="468.88888888888886" class="axis-lbl" fill="#c00">+X</text>
+<line x1="288.88888888888886" y1="400.0" x2="288.88888888888886" y2="333.3333333333333" stroke="#c00" stroke-width="2.0" marker-end="url(#arrow)"/>
+<text x="277.77777777777777" y="328.88888888888886" class="axis-lbl" fill="#c00">+Y</text>
+<text x="360.0" y="418.0" class="label-bold" fill="#c00">O (S1) = (0,0,0)</text>
+<text x="40" y="36" class="title">ALIX Line — Spatial Representation (top-down, X-Y plane)</text>
+<text x="40" y="56" class="subtitle">Origin O at S1 photoelectric sensor · all dimensions in millimetres · dashed footprints = TBC at next lab visit</text>
+<text x="488.88888888888886" y="688.8888888888888" class="label" text-anchor="middle" font-style="italic" fill="#666">— operator side —</text>
+<rect x="840" y="535" width="340" height="200" fill="#fffef8" stroke="#888" stroke-width="0.8" rx="4"/>
+<text x="852" y="555" class="label-bold">Coupling channels</text>
+<line x1="855" y1="573" x2="885" y2="573" stroke="#2d7a3f" stroke-width="2.2" marker-end="url(#arrow-flow)"/>
+<text x="895" y="577" class="label">Part flow (pallet trajectory)</text>
+<line x1="855" y1="593" x2="885" y2="593" stroke="#2a5fb8" stroke-width="1.6" stroke-dasharray="5,3" marker-end="url(#arrow-vib)"/>
+<text x="895" y="597" class="label">Vibration (motor → frame)</text>
+<line x1="855" y1="613" x2="885" y2="613" stroke="#c79100" stroke-width="1.2" stroke-dasharray="2,3" marker-end="url(#arrow-emi)"/>
+<text x="895" y="617" class="label">EMI (drives → sensor cables)</text>
+<circle cx="870" cy="635" r="10" fill="url(#thermal)"/>
+<text x="895" y="639" class="label">Thermal halo (motor body, cabinet)</text>
+<line x1="855" y1="659" x2="885" y2="659" stroke="#333" stroke-width="1.6"/>
+<text x="895" y="663" class="label-sml">solid: from datasheet / nameplate</text>
+<line x1="855" y1="677" x2="885" y2="677" stroke="#333" stroke-width="1.6" stroke-dasharray="6,3"/>
+<text x="895" y="681" class="label-sml">dashed: estimated, TBC next lab visit</text>
+<text x="852" y="707" class="label-sml" font-weight="bold">Scale</text>
+<line x1="900" y1="703" x2="988.8888888888889" y2="703" stroke="#000" stroke-width="1.8"/>
+<line x1="900" y1="698" x2="900" y2="708" stroke="#000" stroke-width="1.8"/>
+<line x1="988.8888888888889" y1="698" x2="988.8888888888889" y2="708" stroke="#000" stroke-width="1.8"/>
+<text x="944.4444444444445" y="721" class="label-sml" text-anchor="middle">200 mm</text>
+<text x="40" y="735" class="label-sml" font-style="italic">Fig.: 2-D top-down spatial layout of the ALIX line. Origin O coincides with the S1 photoelectric sensor used as the temporal trigger of the Python state machine; +X follows belt travel, +Y is lateral. Four coupling channels are overlaid for use in §8 of the project record (coupling-effects matrix).</text>
+</svg>

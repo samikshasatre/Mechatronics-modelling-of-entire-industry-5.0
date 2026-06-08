@@ -1,0 +1,44 @@
+time_s,workpiece,station,action
+0.0,0,ON10,SPAWNED on conveyor
+10.714,0,CR5,arrived
+10.714,0,CR5,START task (duration 5.0 s)
+15.714,0,CR5,END task
+26.429,0,XY10,arrived
+26.429,0,XY10,START task (duration 10.0 s)
+30.0,1,ON10,SPAWNED on conveyor
+36.429,0,XY10,END task
+40.714,1,CR5,arrived
+40.714,1,CR5,START task (duration 5.0 s)
+45.714,1,CR5,END task
+47.143,0,DX10,arrived
+47.143,0,DX10,START task (duration 2.0 s)
+49.143,0,DX10,END task
+56.429,1,XY10,arrived
+56.429,1,XY10,START task (duration 10.0 s)
+59.857,0,VL10,arrived
+59.857,0,VL10,EXIT line
+60.0,2,ON10,SPAWNED on conveyor
+66.429,1,XY10,END task
+70.714,2,CR5,arrived
+70.714,2,CR5,START task (duration 5.0 s)
+75.714,2,CR5,END task
+77.143,1,DX10,arrived
+77.143,1,DX10,START task (duration 2.0 s)
+79.143,1,DX10,END task
+86.429,2,XY10,arrived
+86.429,2,XY10,START task (duration 10.0 s)
+89.857,1,VL10,arrived
+89.857,1,VL10,EXIT line
+90.0,3,ON10,SPAWNED on conveyor
+96.429,2,XY10,END task
+100.714,3,CR5,arrived
+100.714,3,CR5,START task (duration 5.0 s)
+105.714,3,CR5,END task
+107.143,2,DX10,arrived
+107.143,2,DX10,START task (duration 2.0 s)
+109.143,2,DX10,END task
+116.429,3,XY10,arrived
+116.429,3,XY10,START task (duration 10.0 s)
+119.857,2,VL10,arrived
+119.857,2,VL10,EXIT line
+120.0,4,ON10,SPAWNED on conveyor

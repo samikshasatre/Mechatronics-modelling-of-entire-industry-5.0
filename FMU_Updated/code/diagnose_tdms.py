@@ -1,11 +1,3 @@
-"""
-diagnose_tdms.py — Investigate what each TDMS channel actually contains.
-
-Looking at the v6 Panel 2 anomaly: TDMS I1 in first.tdms looks like a positive-only
-ripple around 1.2 A, NOT a 50 Hz AC sinusoid centered on zero.
-
-This script characterizes each TDMS channel to determine its true nature.
-"""
 
 import os, sys
 import numpy as np
@@ -45,7 +37,6 @@ def analyze(rec, name, channel):
     if max_v <= 0:
         print(f"    >> Signal is negative-only — sign convention reversed")
 
-    # Estimate frequency via zero crossings (if mean removed)
     centered = sig - mean
     zero_crossings = np.where(np.diff(np.sign(centered)))[0]
     if len(zero_crossings) >= 4:
@@ -79,7 +70,6 @@ def main():
     print(f"\nfirst.tdms duration: {len(rec_first['I1'])/FS:.1f} s, {len(rec_first['I1'])} samples")
     print(f"four.tdms  duration: {len(rec_four['I1'])/FS:.1f} s, {len(rec_four['I1'])} samples")
 
-    # Analyze short windows from both files at active times
     print("\n" + "=" * 70)
     print("first.tdms @ t=100s — 200 ms window (line operating, conveyor running)")
     print("=" * 70)
@@ -98,7 +88,6 @@ def main():
     for ch in ['U0','U1','I0','I1']:
         analyze(win, 'four.tdms', ch)
 
-    # Visualize first 100 ms of each channel from each file
     fig, axes = plt.subplots(4, 2, figsize=(14, 10))
     fig.suptitle("TDMS channel diagnosis — first.tdms (left), four.tdms (right)\n"
                  "Identify which channel actually contains the 50 Hz AC line current",
@@ -107,7 +96,6 @@ def main():
     win_n = int(0.1 * FS)  # 100 ms
     t_ms = np.arange(win_n) / FS * 1000
 
-    # first.tdms @ 100s
     s_idx = int(100.0 * FS)
     for i, ch in enumerate(['U0','U1','I0','I1']):
         ax = axes[i, 0]
@@ -118,7 +106,6 @@ def main():
         ax.axhline(0, color='gray', lw=0.5)
     axes[3, 0].set_xlabel('Time [ms]')
 
-    # four.tdms @ 20s
     s_idx = int(20.0 * FS)
     for i, ch in enumerate(['U0','U1','I0','I1']):
         ax = axes[i, 1]

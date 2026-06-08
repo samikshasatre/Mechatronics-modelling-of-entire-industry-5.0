@@ -1,0 +1,25 @@
+ALIX LINE - END-TO-END ORCHESTRATION SUMMARY
+============================================================
+
+Production cycle duration : 30.0 s
+Master timestep           : 10 ms (rate 100 Hz)
+Samples on master grid    : 3001
+
+Conveyor:
+  Mean power         : 110.7 W
+  Peak phase current : 9.108 A
+  Final motor temp   : 26.4 deg C
+  Energy per cycle   : 3321.4 J
+
+XY10 (2 cycles per 30-s window):
+  Peak power         : 3.77 W
+  X travel max       : 0.241 m
+  Y travel max       : 0.195 m
+  Energy per cycle   : 19.9 J
+
+CR5 (1 cycle per 30-s window):
+  Peak power         : 48.99 W
+  J2 angle range     : 0.0 to 162.3 deg
+  Energy per cycle   : 65.8 J
+
+TOTAL line energy per cycle: 3407.1 J

@@ -1,0 +1,13 @@
+CALIBRATION SUMMARY — ALL SUBSYSTEMS
+============================================================
+
+Conveyor measurement target: 1.144 A
+Conveyor sensitivity to Rs_motor: 0.7% over 6-16 Ohm range
+  -> Rs NOT a sensitive parameter at this operating point
+
+XY10 measurement target: 4922 J / 15-s burst
+XY10 model prediction: ~12 J / 12-s cycle
+  -> 400x gap = stepper holding current (out of scope)
+
+CR5 measurement target: NONE AVAILABLE
+CR5 structural validation: total mass 23.74 kg vs 25 kg brochure (94.9%)
